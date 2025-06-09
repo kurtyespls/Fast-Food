@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fast Food Order - Customer</title>
+ 
+  <link rel="stylesheet" href="customer.css">
+</head>
+
+<style media="print">
+  body * {
+    visibility: hidden;
+  }
+
+  #receipt, #receipt * {
+    visibility: visible;
+  }
+
+  #receipt {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: white;
+    padding: 20px;
+  }
+
+  .print-btn {
+    display: none; /* Hide the Print button when printing */
+  }
+</style>
+
+
+<body>
+  <header>🍔 FastFood Express - Order Now</header>
+  <main>
+    <section id="menu" aria-label="Menu">
+      <h2>Menu</h2>
+      <div class="menu-items" aria-live="polite"></div>
+    </section>
+
+    <aside id="sidebar" aria-label="Order Summary">
+      <section id="cart" aria-label="Shopping Cart">
+        <h2>Your Cart</h2>
+        <div class="cart-items">
+        
+        </div>
+        <p><strong>Total:</strong> ₱<span id="total">0.00</span></p>
+
+        <h3>Customer Information</h3>
+        <input type="text" id="customerName" placeholder="Full Name" required autocomplete="name" aria-required="true" />
+        <input type="tel" id="customerPhone" placeholder="Phone Number" required autocomplete="tel" aria-required="true"/>
+
+        <br>
+
+        <label for="tableSelect"><strong>Table Number or Takeout</strong></label><br>
+        <select id="tableSelect" required aria-required="true">
+          <option value="" disabled selected>Select Table or Takeout</option>
+          <option value="Takeout">Takeout</option>
+          <option value="Table 1">Table 1</option>
+          <option value="Table 2">Table 2</option>
+          <option value="Table 3">Table 3</option>
+          <option value="Table 4">Table 4</option>
+        </select>
+        <br>
+        <br>
+
+        <button class="checkout-btn" onclick="checkout()" aria-label="Proceed to Checkout">✅ Checkout</button>
+
+      </section>    
+
+      <section id="receipt" aria-live="polite" role="region" aria-label="Receipt">
+        <h2>🧾 Receipt</h2>
+        <div id="receiptContent">
+            <h2>FastFood Express Receipt</h2>
+
+        </div>
+        <button class="print-btn" onclick="window.print()" aria-label="Print Receipt">🖨️ Print Receipt</button>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    let menuItems = JSON.parse(localStorage.getItem('menuStock')) || [];
+    const cart = [];
+
+    function loadMenu() {
+      const menuDiv = document.querySelector('.menu-items');
+      menuDiv.innerHTML = '';
+      menuItems.forEach(item => {
+        const isOut = item.stock <= 0;
+        const div = document.createElement('div');
+        div.className = 'menu-item';
+        div.innerHTML = `
+          <img src="${item.image}" alt="${item.name}" loading="lazy" />
+          <h3>${item.name}</h3>
+          <p>₱${item.price.toFixed(2)}</p>
+          <div class="menu-item-controls">
+            <input type="number" id="qty-${item.id}" min="1" max="${item.stock}" value="1" ${isOut ? 'disabled' : ''} aria-label="Quantity for ${item.name}" />
+            <button onclick="addToCart(${item.id})" ${isOut ? 'disabled' : ''} aria-label="${isOut ? 'Out of stock' : 'Add to cart'}">
+              ${isOut ? 'Out of Stock' : 'Add'}
+            </button>
+          </div>
+        `;
+        menuDiv.appendChild(div);
+      });
+    }
+
+    function addToCart(itemId) {
+      const item = menuItems.find(m => m.id === itemId);
+      const qtyInput = document.getElementById(`qty-${item.id}`);
+      const qty = parseInt(qtyInput.value);
+
+      if (isNaN(qty) || qty < 1 || qty > item.stock) {
+        alert(`Enter a quantity between 1 and ${item.stock}`);
+        return;
+      }
+
+      const existing = cart.find(ci => ci.id === itemId);
+      if (existing) {
+        if (existing.quantity + qty > item.stock) {
+          alert(`Only ${item.stock - existing.quantity} more in stock for ${item.name}`);
+          return;
+        }
+        existing.quantity += qty;
+      } else {
+        cart.push({ id: item.id, name: item.name, price: item.price, quantity: qty });
+      }
+
+      updateCart();
+    }
+
+    function updateCart() {
+      const cartDiv = document.querySelector('.cart-items');
+      const totalSpan = document.getElementById('total');
+      cartDiv.innerHTML = '';
+      let total = 0;
+
+      cart.forEach((item, index) => {
+        total += item.price * item.quantity;
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+          <div>${item.name} - ₱${item.price.toFixed(2)} x ${item.quantity}</div>
+          <div>
+            <button onclick="adjustQty(${index}, -1)" aria-label="Decrease quantity for ${item.name}">➖</button>
+            <button onclick="adjustQty(${index}, 1)" aria-label="Increase quantity for ${item.name}">➕</button>
+            <button onclick="removeFromCart(${index})" aria-label="Remove ${item.name} from cart">❌</button>
+          </div>
+        `;
+        cartDiv.appendChild(div);
+      });
+
+      totalSpan.textContent = total.toFixed(2);
+    }
+
+    function adjustQty(index, delta) {
+      const item = cart[index];
+      const stock = menuItems.find(m => m.id === item.id).stock;
+
+      if (item.quantity + delta < 1) return;
+      if (item.quantity + delta > stock) {
+        alert(`Only ${stock} in stock for ${item.name}`);
+        return;
+      }
+
+      item.quantity += delta;
+      updateCart();
+    }
+
+    function removeFromCart(index) {
+      cart.splice(index, 1);
+      updateCart();
+    }
+
+    function checkout() {
+      const name = document.getElementById('customerName').value.trim();
+      const phone = document.getElementById('customerPhone').value.trim();
+      const table = document.getElementById('tableSelect').value;
+
+      if (!name || !phone || !table) {
+        alert("Please fill in all customer details.");
+        return;
+      }
+
+      if (cart.length === 0) {
+        alert("Your cart is empty.");
+        return;
+      }
+
+      for (const item of cart) {
+        const stockItem = menuItems.find(m => m.id === item.id);
+        if (stockItem.stock < item.quantity) {
+          alert(`Not enough stock for ${item.name}.`);
+          return;
+        }
+      }
+
+      cart.forEach(item => {
+        const stockItem = menuItems.find(m => m.id === item.id);
+        stockItem.stock -= item.quantity;
+      });
+
+      localStorage.setItem('menuStock', JSON.stringify(menuItems));
+
+      let total = 0;
+      let receipt = `
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Phone:</strong> ${phone}</p>
+        <p><strong>Table:</strong> ${table}</p>
+        <hr />
+        <h3>Items:</h3>
+        <ul>
+      `;
+
+      cart.forEach(item => {
+        receipt += `<li>${item.name} x${item.quantity} - ₱${(item.price * item.quantity).toFixed(2)}</li>`;
+        total += item.price * item.quantity;
+      });
+
+      receipt += `</ul><p><strong>Total:</strong> ₱${total.toFixed(2)}</p><p>✅ Thank you for your order!</p>`;
+
+      document.getElementById('receiptContent').innerHTML = receipt;
+      document.getElementById('receipt').style.display = 'block';
+
+      const order = {
+        name,
+        phone,
+        table,
+        items: cart.map(i => ({ name: i.name, quantity: i.quantity })),
+        total,
+        timestamp: new Date().toLocaleString()
+      };
+      const orders = JSON.parse(localStorage.getItem('orders')) || [];
+      orders.push(order);
+      localStorage.setItem('orders', JSON.stringify(orders));
+
+      cart.length = 0;
+      updateCart();
+      loadMenu();
+
+      document.getElementById('customerName').value = '';
+      document.getElementById('customerPhone').value = '';
+      document.getElementById('tableSelect').value = '';
+    }
+
+    window.onload = loadMenu;
+  </script>
+</body>
+</html>

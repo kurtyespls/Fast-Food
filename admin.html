@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fast Food Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="admin.css">
+  
+</head>
+<body>
+
+  <header>
+    <h1>FastFood Express - Admin Panel</h1>
+    <div>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <main class="container" role="main">
+
+    <section aria-labelledby="ordersTitle" id="orderSection">
+      <h2 id="ordersTitle" style="font-size:1.875rem; font-weight: 700; color:#111827; margin-bottom:1rem; user-select:none;">Order History</h2>
+      <div id="orderHeader" role="toolbar" aria-label="Order management actions">
+        <button type="button" id="refreshOrdersBtn" aria-label="Refresh Orders">🔄 Refresh Orders</button>
+        <button type="button" id="selectAllBtn" aria-label="Select All Orders">✅ Select All</button>
+        <button type="button" id="deselectAllBtn" aria-label="Deselect All Orders">❌ Deselect All</button>
+        <button type="button" id="deleteSelectedBtn" aria-label="Delete Selected Orders">🗑️ Delete Selected</button>
+      </div>
+      <div id="orderHistory" aria-live="polite" aria-relevant="additions removals" role="list"></div>
+    </section>
+
+    <section id="productManagement" aria-labelledby="productsTitle">
+      <h2 id="productsTitle">Manage Products & Stock</h2>
+      <form id="addProductForm" onsubmit="event.preventDefault(); addProduct();" aria-label="Add new product form">
+        <input type="text" id="newName" placeholder="Product Name" required aria-required="true" aria-label="New product name"/>
+        <input type="number" id="newPrice" placeholder="Price" min="0" step="0.01" required aria-required="true" aria-label="New product price"/>
+        <input type="number" id="newStock" placeholder="Stock" min="0" step="1" required aria-required="true" aria-label="New product stock"/>
+        <input type="url" id="newImage" placeholder="Image URL" required aria-required="true" aria-label="New product image URL"/>
+        <button type="submit" aria-label="Add product">➕ Add Product</button>
+      </form>
+
+
+
+      <table role="grid" aria-label="Product management table" aria-readonly="true" tabindex="0">
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col" aria-label="Product image"></th>
+            <th scope="col">Name</th>
+            <th scope="col">Price (₱)</th>
+            <th scope="col">Stock</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="productsTableBody"></tbody>
+      </table>
+    </section>
+
+  </main>
+
+  <div aria-live="assertive" aria-atomic="true" class="toast-container" id="toastContainer" style="position: fixed; top: 16px; right: 16px; z-index: 9999;"></div>
+
+  <script>
+    // Authentication guard
+    if (sessionStorage.getItem('isAdminLoggedIn') !== 'true') {
+      alert("Please login first!");
+      window.location.href = "admin-login.html";
+    }
+
+    // Toast function
+    function showToast(message, duration = 3000) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.textContent = message;
+      toast.style.backgroundColor = "#111827";
+      toast.style.color = "#f9fafb";
+      toast.style.padding = "0.75rem 1.2rem";
+      toast.style.borderRadius = "0.5rem";
+      toast.style.marginTop = "10px";
+      toast.style.fontSize = "0.95rem";
+      toast.style.fontWeight = "600";
+      toast.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+      toast.style.opacity = "1";
+      toast.style.transition = "opacity 0.4s ease";
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 500);
+      }, duration);
+    }
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.removeItem('isAdminLoggedIn');
+      window.location.href = "admin-login.html";
+    });
+
+    // Product Management logic
+    let products = JSON.parse(localStorage.getItem('menuStock')) || [];
+
+    function saveProducts() {
+      localStorage.setItem('menuStock', JSON.stringify(products));
+    }
+
+    function renderProducts() {
+      const tbody = document.getElementById('productsTableBody');
+      tbody.innerHTML = '';
+      products.forEach((p, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${p.id}</td>
+          <td><img src="${p.image}" alt="${p.name}" loading="lazy" /></td>
+          <td><input type="text" aria-label="Edit product name" value="${p.name}" onchange="updateProductName(${i}, this.value)" /></td>
+          <td><input type="number" min="0" step="0.01" aria-label="Edit product price" value="${p.price}" onchange="updateProductPrice(${i}, this.value)" /></td>
+          <td><input type="number" min="0" step="1" aria-label="Edit product stock" value="${p.stock}" onchange="updateProductStock(${i}, this.value)" /></td>
+          <td><button class="action-btn" onclick="deleteProduct(${i})" aria-label="Delete product ${p.name}">Delete</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function addProduct() {
+      const name = document.getElementById('newName').value.trim();
+      const price = parseFloat(document.getElementById('newPrice').value);
+      const stock = parseInt(document.getElementById('newStock').value);
+      const image = document.getElementById('newImage').value.trim();
+
+      if (!name || isNaN(price) || isNaN(stock) || price < 0 || stock < 0 || !image) {
+        showToast("Please enter valid product info");
+        return;
+      }
+
+      const newId = products.length ? Math.max(...products.map(p => p.id)) + 1 : 1;
+      products.push({ id: newId, name, price, stock, image });
+      saveProducts();
+      renderProducts();
+      document.getElementById('addProductForm').reset();
+      showToast("Product added.");
+    }
+
+    function updateProductName(index, val) {
+      products[index].name = val.trim() || products[index].name;
+      saveProducts();
+    }
+
+    function updateProductPrice(index, val) {
+      const price = parseFloat(val);
+      if (!isNaN(price) && price >= 0) {
+        products[index].price = price;
+        saveProducts();
+      }
+    }
+
+    function updateProductStock(index, val) {
+      const stock = parseInt(val);
+      if (!isNaN(stock) && stock >= 0) {
+        products[index].stock = stock;
+        saveProducts();
+      }
+    }
+
+    function deleteProduct(index) {
+      if (confirm("Delete this product?")) {
+        products.splice(index, 1);
+        saveProducts();
+        renderProducts();
+        showToast("Product deleted.");
+      }
+    }
+
+    // Order History logic with responsive limit
+function loadOrders() {
+  const orders = JSON.parse(localStorage.getItem('orders')) || [];
+  const historyDiv = document.getElementById('orderHistory');
+  historyDiv.innerHTML = '';
+
+  if (orders.length === 0) {
+    historyDiv.innerHTML = '<p style="color:#6b7280; font-style: italic;">No past orders.</p>';
+    return;
+  }
+
+  // Determine limit based on viewport width
+  const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+  const limit = isDesktop ? 3 : 5;
+
+  // Show newest orders first, but only up to limit
+  const limitedOrders = orders.slice(-limit).reverse();
+
+  limitedOrders.forEach((order, index) => {
+    let itemsObj = order.items;
+    if (typeof itemsObj === 'string') {
+      try {
+        itemsObj = JSON.parse(itemsObj);
+      } catch {
+        itemsObj = [];
+      }
+    }
+
+    let itemsListHTML = '<li>No items</li>';
+    if (Array.isArray(itemsObj) && itemsObj.length > 0) {
+      itemsListHTML = itemsObj.map(item => `<li>${item.name} x${item.quantity}</li>`).join('');
+    }
+
+    // Calculate actual index in the original orders array
+    const actualIndex = orders.length - 1 - (limit - 1 - index);
+
+    const div = document.createElement('div');
+    div.className = 'order-record';
+    div.setAttribute('role', 'listitem');
+    div.innerHTML = `
+      <input type="checkbox" class="order-checkbox" data-index="${actualIndex}" aria-label="Select order placed by ${order.name} at ${order.timestamp}" />
+      <strong>${order.timestamp}</strong>
+      <p><strong>Name:</strong> ${order.name}</p>
+      <p><strong>Phone:</strong> ${order.phone}</p>
+      <p><strong>Table:</strong> ${order.table}</p>
+      <p><strong>Items:</strong></p>
+      <ul>${itemsListHTML}</ul>
+      <p><strong>Total:</strong> ₱${order.total.toFixed(2)}</p>
+      <div class="order-actions">
+        <button onclick="deleteOrder(${actualIndex})" aria-label="Delete order placed by ${order.name}">🗑️ Delete</button>
+      </div>
+    `;
+    historyDiv.appendChild(div);
+  });
+}
+
+// Re-load orders on window resize to apply limit change
+window.addEventListener('resize', () => {
+  loadOrders();
+});
+
+// Initial load
+window.onload = function() {
+  renderProducts();
+  loadOrders();
+};
+
+
+    function selectAllReceipts(select) {
+      document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = select);
+    }
+
+    function deleteSelectedOrders() {
+      const selectedCheckboxes = document.querySelectorAll('.order-checkbox:checked');
+      if (selectedCheckboxes.length === 0) {
+        showToast("No receipts selected.");
+        return;
+      }
+
+      if (!confirm(`Delete ${selectedCheckboxes.length} selected receipt(s)?`)) return;
+
+      let orders = JSON.parse(localStorage.getItem('orders')) || [];
+      const indexesToDelete = Array.from(selectedCheckboxes)
+        .map(cb => parseInt(cb.dataset.index))
+        .sort((a,b) => b-a);
+      indexesToDelete.forEach(index => orders.splice(index, 1));
+
+      localStorage.setItem('orders', JSON.stringify(orders));
+      loadOrders();
+      showToast("Selected receipts deleted.");
+    }
+
+    function deleteOrder(index) {
+      if (confirm("Are you sure you want to delete this receipt?")) {
+        let orders = JSON.parse(localStorage.getItem('orders')) || [];
+        orders.splice(index, 1);
+        localStorage.setItem('orders', JSON.stringify(orders));
+        loadOrders();
+        showToast("Receipt deleted.");
+      }
+    }
+
+    // Button event listeners
+    document.getElementById('refreshOrdersBtn').addEventListener('click', () => {
+      loadOrders();
+      showToast("Orders refreshed.");
+    });
+
+    document.getElementById('selectAllBtn').addEventListener('click', () => {
+      selectAllReceipts(true);
+    });
+
+    document.getElementById('deselectAllBtn').addEventListener('click', () => {
+      selectAllReceipts(false);
+    });
+
+    document.getElementById('deleteSelectedBtn').addEventListener('click', () => {
+      deleteSelectedOrders();
+    });
+
+    // Initialization
+    window.onload = function() {
+      renderProducts();
+      loadOrders();
+    };
+  </script>
+
+</body>
+</html>
+

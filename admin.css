@@ -1,0 +1,328 @@
+/* admin.css */
+
+/* Base styles (mobile-first) */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Inter', Arial, sans-serif;
+  background: #f8f8f8;
+  color: #111827;
+  animation: fadeIn 0.4s ease-in;
+}
+header {
+  background: #ff5722;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  animation: slideDown 0.5s ease-out;
+}
+header h1 {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+header div {
+  display: flex;
+  gap: 8px;
+}
+button {
+  background: #ff5722;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+button:hover {
+  background: #e64a19;
+  transform: scale(1.05);
+}
+
+/* Container layout */
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 12px;
+}
+
+/* Sections */
+h2 {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+}
+#orderHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+#orderHeader button { flex: 1; }
+
+#orderHistory {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1rem;
+}
+
+/* Orders list */
+#orderHistory .order-record {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  animation: fadeInUp 0.3s ease-in;
+}
+.order-record strong {
+  display: block;
+  margin-bottom: 8px;
+}
+.order-actions button {
+  background: #e53e3e;
+}
+.order-actions button:hover {
+  background: #c53030;
+}
+
+/* Product form */
+#addProductForm {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: fadeInUp 0.4s ease-in;
+}
+#addProductForm input,
+#addProductForm button[type="submit"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+#addProductForm input:focus {
+  border-color: #ff5722;
+  outline: none;
+}
+#addProductForm button[type="submit"] {
+  background: #e64a19;
+  color: white;
+  transition: background 0.3s ease;
+}
+#addProductForm button[type="submit"]:hover {
+  background: #e64a19;
+}
+
+/* Products table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  animation: fadeInUp 0.4s ease-in;
+}
+thead {
+  background: #edf2f7;
+  
+}
+th, td {
+  padding: 8px;
+  text-align: center;
+}
+tbody tr:nth-child(odd) {
+  background: #f7fafc;
+}
+tbody img {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+tbody input {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  transition: border-color 0.3s ease;
+  text-align: center;
+}
+tbody input:focus {
+  border-color: #ff5722;
+  outline: none;
+}
+.action-btn {
+  background: #e53e3e;
+  padding: 4px 8px;
+}
+.action-btn:hover {
+  background: #c53030;
+}
+
+/* Toasts */
+.toast-container > div {
+  animation: fadeIn 0.4s, fadeOut 0.4s ease-out 2.6s forwards;
+}
+
+/* === Order History Section Styling === */
+#orderSection {
+  margin-top: 2rem;
+}
+
+#orderHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+#orderHeader button {
+  background-color: #e64a19;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.8rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#orderHeader button:hover {
+  background-color: #e64a19;
+}
+
+.order-record {
+  background-color: #f9fafb;
+  border-left: 4px solid #e64a19;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  width: 100%;
+  box-sizing: border-box;
+
+}
+
+.order-record:hover {
+  transform: scale(1.01);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.order-record input[type="checkbox"] {
+  transform: scale(1.2);
+  margin-bottom: 0.5rem;
+}
+
+.order-record strong {
+  display: block;
+  font-size: 1.1rem;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+.order-record p,
+.order-record ul {
+  margin: 0.25rem 0;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.order-record ul {
+  padding-left: 1rem;
+  list-style-type: disc;
+}
+
+.order-actions {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.order-actions button {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.order-actions button:hover {
+  background-color: #b91c1c;
+}
+
+
+
+/* === Responsive: Larger Screens === */
+@media (min-width: 640px) {
+  .order-record {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #orderHistory {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+@media (min-width: 768px) {
+  .order-record {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .order-record p,
+  .order-record ul {
+    font-size: 1rem;
+  }
+
+  #orderHeader {
+    justify-content: flex-start;
+  }
+
+   #orderHistory {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+
+/* Larger screens */
+@media (min-width: 768px) {
+  .container {
+    flex-direction: row;
+    gap: 20px;
+    padding: 20px;
+  }
+  #orderSection, #productManagement {
+    flex: 1;
+  }
+  header {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 15px 20px;
+  }
+  header h1 {
+    font-size: 24px;
+    margin-bottom: 0;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideDown { from { transform: translateY(-20px); } to { transform: translateY(0); } }
+@keyframes fadeInUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fadeOut { to { opacity: 0; } }
+}
